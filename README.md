@@ -92,9 +92,51 @@ graph TD
 
 ## Understanding AXI4 Protocol: A Quick Reference
 
-The **Advanced eXtensible Interface 4 (AXI4)** protocol is a point-to-point interface designed for high-frequency, high-bandwidth system designs. It is based on **5 independent transaction channels**:
+AXI4 isn't one wire carrying everything. It's five separate roads, each with one job, all open at the same time.
+
+That is what this animation shows: an AXI4 Master (think CPU or DMA engine) talking to a Slave (a memory controller), with a live waveform deck underneath so you can watch every signal the way a simulator shows it.
+
+━━━━━━━━━━━━━━━
+### 𝗧𝗵𝗲 𝘁𝗲𝗿𝗺𝘀, 𝗼𝗻𝗲 𝗹𝗶𝗻𝗲 𝗲𝗮𝗰𝗵 📘
+
+* **Master**: the block that starts a request.
+* **Slave**: the block that answers it.
+* **Channel**: a one-way group of wires with a single job. AXI4 has five: AW, W, B, AR, R.
+* **VALID**: the sender saying "my data is on the wires."
+* **READY**: the receiver saying "I can take it now."
+* **Handshake**: the clock edge where VALID and READY are both high. Only then does data move.
+* **Transaction**: one complete request, from address to final response.
+* **Burst**: one address, many data transfers.
+* **Beat**: a single transfer inside a burst.
+* **WLAST / RLAST**: the flag raised on the final beat.
+* **OKAY**: the response code for "done, no errors."
+* **ID**: a tag on each transaction so many can be in flight at once.
+
+━━━━━━━━━━━━━━━
+### 𝗪𝗵𝗮𝘁 𝗲𝗮𝗰𝗵 𝘀𝗰𝗲𝗻𝗲 𝘀𝗵𝗼𝘄𝘀 🎬
+
+1. **Handshake**: VALID goes high and holds. READY arrives later. The packet waits at the gate until both meet. That waiting is the sticky VALID rule in action.
+2. **Write**: the address rides AW, four data beats ride W (one beat stalls when READY drops for a cycle), and the Slave confirms with OKAY on B.
+3. **Read**: the address rides AR and the data itself returns on R. For reads, the data is the response.
+4. **Bursts**: INCR steps through memory, WRAP circles back at a boundary (cache lines), FIXED repeats one address (FIFOs).
+5. **Out of order**: two reads are issued, ID1 returns before ID0, and nothing breaks. The ID tags keep everything sorted.
+
+━━━━━━━━━━━━━━━
+### 𝗪𝗵𝘆 𝗰𝗼𝗺𝗽𝗹𝗲𝘅 𝗰𝗵𝗶𝗽𝘀 𝘂𝘀𝗲 𝗔𝗫𝗜𝟰 ⚙️
+
+* Reads and writes travel on separate channels, so they run in parallel.
+* One address can carry up to 256 data beats. Less overhead, more bandwidth.
+* Several requests stay outstanding at once, so a slow slave never blocks a fast one.
+* Out-of-order completion lets memory controllers serve whoever is ready first.
+* Channels are independent, so designers can add pipeline stages anywhere and still close timing.
+
+That is why AXI4 sits at the center of nearly every modern SoC, connecting CPUs, GPUs, DMA engines and memory.
+
+━━━━━━━━━━━━━━━
 
 ### The 5 Channels of AXI4
+
+The **Advanced eXtensible Interface 4 (AXI4)** protocol is a point-to-point interface designed for high-frequency, high-bandwidth system designs. It is based on **5 independent transaction channels**:
 
 | Channel | Signal Prefix | Direction (Master $\leftrightarrow$ Slave) | Description |
 | :--- | :---: | :---: | :--- |
