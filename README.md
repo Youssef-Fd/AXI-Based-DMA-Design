@@ -68,11 +68,11 @@ The **Advanced eXtensible Interface 4 (AXI4)** protocol is a point-to-point inte
 
 | Channel | Signal Prefix | Direction (Master $\leftrightarrow$ Slave) | Description |
 | :--- | :---: | :---: | :--- |
-| **Read Address** | `AR` | Master $\rightarrow$ Slave | Specifies read start address, burst length, and burst size. |
-| **Read Data** | `R` | Slave $\rightarrow$ Master | Returns the requested read data, status flags, and burst-last indicators. |
 | **Write Address** | `AW` | Master $\rightarrow$ Slave | Specifies write start address, burst length, and burst size. |
 | **Write Data** | `W` | Master $\rightarrow$ Slave | Sends the write data stream with byte-select strobes (`WSTRB`). |
 | **Write Response** | `B` | Slave $\rightarrow$ Master | Confirms transaction success/failure (e.g., after a complete write burst). |
+| **Read Address** | `AR` | Master $\rightarrow$ Slave | Specifies read start address, burst length, and burst size. |
+| **Read Data** | `R` | Slave $\rightarrow$ Master | Returns the requested read data, status flags, and burst-last indicators. |
 
 ### Important AXI Protocol Concepts Used in This Project
 
@@ -97,10 +97,10 @@ Read and Write transactions follow specific state transitions and timing require
 During a write transaction, address is sent on the `AW` channel, data beats on the `W` channel (flagging `WLAST` on the last beat), and finally, a response is received on the `B` response channel.
 
 ![AXI Write Flow](Docs/AXI%20Write%20Flow.png)
-*Figure: Flow chart of AXI Write state machine operations.*
+            *Figure: Flow chart of AXI Write state machine operations.*
 
 ![Write Transaction Timing Diagram](Docs/Write%20Transaction%20Timing%20Diagram.png)
-*Figure: AXI Write Bus Timing Diagram showing AW, W, and B channel transactions.*
+            *Figure: AXI Write Bus Timing Diagram showing AW, W, and B channel transactions.*
 
 ##### Read Flow & Timing
 During a read transaction, the address is sent on the `AR` channel, and data is returned on the `R` channel. The last beat of the burst is flagged by `RLAST`.
