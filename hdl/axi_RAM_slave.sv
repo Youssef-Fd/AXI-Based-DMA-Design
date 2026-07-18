@@ -1,28 +1,7 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: INPT
-// Engineer: Youssef FADEL
-// 
-// Create Date: 15.07.2026 21:18:18
-// Design Name: 
-// Module Name: axi_ram_slave
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
 module axi_slave_memory #(
     parameter ADDR_WIDTH = 32,
     parameter DATA_WIDTH = 32,
-    parameter MEM_DEPTH  = 1024          // number of 32-bit words
+    parameter MEM_DEPTH  = 1024          
 )(
     input  logic                      clk,
     input  logic                      rst,
@@ -30,8 +9,8 @@ module axi_slave_memory #(
     // AXI Read Address Channel
     input  logic [ADDR_WIDTH-1:0]     ARADDR,
     input  logic [7:0]                ARLEN,
-    input  logic [2:0]                ARSIZE,      // ignored - only 32-bit accesses
-    input  logic [1:0]                ARBURST,     // ignored - only INCR
+    input  logic [2:0]                ARSIZE,      
+    input  logic [1:0]                ARBURST,     
     input  logic                      ARVALID,
     output logic                      ARREADY,
 
@@ -45,14 +24,14 @@ module axi_slave_memory #(
     // AXI Write Address Channel
     input  logic [ADDR_WIDTH-1:0]     AWADDR,
     input  logic [7:0]                AWLEN,
-    input  logic [2:0]                AWSIZE,      // ignored - only 32-bit accesses
-    input  logic [1:0]                AWBURST,     // ignored - only INCR
+    input  logic [2:0]                AWSIZE,      
+    input  logic [1:0]                AWBURST,     
     input  logic                      AWVALID,
     output logic                      AWREADY,
 
     // AXI Write Data Channel
     input  logic [DATA_WIDTH-1:0]     WDATA,
-    input  logic [DATA_WIDTH/8-1:0]   WSTRB,    // ignored - full-word writes only
+    input  logic [DATA_WIDTH/8-1:0]   WSTRB,   
     input  logic                      WLAST,
     input  logic                      WVALID,
     output logic                      WREADY,
@@ -63,15 +42,8 @@ module axi_slave_memory #(
     input  logic                      BREADY
 );
 
-    // --------------------------------------------------------------
-    // Memory array with initialisation (for simulation)
-    // --------------------------------------------------------------
     logic [DATA_WIDTH-1:0] mem [0:MEM_DEPTH-1];
-
-    // --------------------------------------------------------------
-    // Read FSM - fixed: RLAST is driven before the handshake,
-    // and RVALID stays high until the next cycle.
-    // --------------------------------------------------------------
+    
     localparam R_IDLE = 2'd0, R_SEND = 2'd1;
     
     logic [1:0] r_state;
@@ -187,14 +159,12 @@ module axi_slave_memory #(
                     if (WVALID && WREADY) begin
                         // Check address bounds
                         if (((w_addr_base >> 2) + w_cnt) < MEM_DEPTH) begin
-                            // Full-word writes - WSTRB ignored (all ones expected)
                             mem[(w_addr_base >> 2) + w_cnt] <= WDATA;
                             BRESP <= 2'b00;          // OKAY
                         end else begin
                             BRESP <= 2'b10;          // SLVERR
                         end
 
-                        // Advance counter
                         w_cnt <= w_cnt + 1;
 
                         // If this is the last beat, move to response
