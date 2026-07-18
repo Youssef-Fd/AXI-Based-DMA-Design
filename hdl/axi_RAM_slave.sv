@@ -43,7 +43,10 @@ module axi_slave_memory #(
 );
 
     logic [DATA_WIDTH-1:0] mem [0:MEM_DEPTH-1];
-    
+
+	// --------------------------------------------------------------
+    // Write FSM
+    // --------------------------------------------------------------
     localparam R_IDLE = 2'd0, R_SEND = 2'd1;
     
     logic [1:0] r_state;
