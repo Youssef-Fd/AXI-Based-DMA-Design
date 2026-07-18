@@ -83,7 +83,10 @@ Every channel utilizes a two-way handshake. A transfer occurs on any clock edge 
 
 Below is the conceptual handshake diagram, as well as a visual representation from our documentation:
 
-![The Handshake Mechanism](Docs/The%20Handshake%20Mechanism.png)
+<p align="center">
+  <img src="Docs/The%20Handshake%20Mechanism.png" alt="The Handshake Mechanism" width="80%"><br>
+  <em>Figure: The AXI VALID/READY handshake mechanism.</em>
+</p>
 
 #### 2. Burst Configurations
 * **`ARLEN` / `AWLEN`**: Specifies the number of beats in a burst. Value sent is $Burst\_Length - 1$ (e.g., `8'h0F` represents 16 beats).
@@ -96,20 +99,29 @@ Read and Write transactions follow specific state transitions and timing require
 ##### Write Flow & Timing
 During a write transaction, address is sent on the `AW` channel, data beats on the `W` channel (flagging `WLAST` on the last beat), and finally, a response is received on the `B` response channel.
 
-![AXI Write Flow](Docs/AXI%20Write%20Flow.png)
-            *Figure: Flow chart of AXI Write state machine operations.*
+<p align="center">
+  <img src="Docs/AXI%20Write%20Flow.png" alt="AXI Write Flow" width="70%"><br>
+  <em>Figure: Flow chart of AXI Write.</em>
+</p>
 
-![Write Transaction Timing Diagram](Docs/Write%20Transaction%20Timing%20Diagram.png)
-            *Figure: AXI Write Bus Timing Diagram showing AW, W, and B channel transactions.*
+<p align="center">
+  <img src="Docs/Write%20Transaction%20Timing%20Diagram.png" alt="Write Transaction Timing Diagram" width="90%"><br>
+  <em>Figure: AXI Write Bus Timing Diagram.</em>
+</p>
 
 ##### Read Flow & Timing
 During a read transaction, the address is sent on the `AR` channel, and data is returned on the `R` channel. The last beat of the burst is flagged by `RLAST`.
 
-![AXI Read Flow](Docs/AXI%20Read%20Flow.png)
-*Figure: Flow chart of AXI Read state machine operations.*
+<p align="center">
+  <img src="Docs/AXI%20Read%20Flow.png" alt="AXI Read Flow" width="70%"><br>
+  <em>Figure: Flow chart of AXI Read.</em>
+</p>
 
-![Read Transaction Timing Diagram](Docs/Read%20Transaction%20Timing%20Diagram.png)
-*Figure: AXI Read Bus Timing Diagram showing Address Phase and Data beats with handshake.*
+<p align="center">
+  <img src="Docs/Read%20Transaction%20Timing%20Diagram.png" alt="Read Transaction Timing Diagram" width="90%"><br>
+  <em>Figure: AXI Read Bus Timing Diagram.</em>
+</p>
+
 
 #### 4. Response Status (`RRESP` & `BRESP`)
 Feedback flags indicating success or fault conditions:
