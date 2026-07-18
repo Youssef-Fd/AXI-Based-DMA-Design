@@ -34,11 +34,11 @@ The project is structured hierarchically. The top-level wrapper, [`dma_engine.sv
 
 ```mermaid
 graph TD
-    subgraph "AXI DMA Engine (dma_engine.sv)"
-        Controller[DMA Controller <br/> dma_controller.sv]
-        ReadMaster[AXI Read Master <br/> AXI_Read_MASTER.sv]
-        WriteMaster[AXI Write Master <br/> axi_write_master.sv]
-        FIFO[Synchronous FIFO <br/> FIFO.sv]
+    subgraph "AXI DMA Engine"
+        Controller[DMA Controller]
+        ReadMaster[AXI Read Master]
+        WriteMaster[AXI Write Master]
+        FIFO[Synchronous FIFO]
     end
 
     AXI_Read_Bus((AXI Read Bus))
