@@ -127,12 +127,6 @@ module dma_controller #(
 					end
 				end
 				
-				//--------------------------------------------------
-                // axi_write_master samples its start input on TWO
-                // consecutive cycles (IDLE_0 then IDLE_1) before it
-                // actually begins the burst, so write_start has to be
-                // held high across two STATEs here, not pulsed for one.
-                //--------------------------------------------------
 				START_WRITE_0: begin
 				    write_start <= 1'b1;
 					STATE <= START_WRITE_1;
