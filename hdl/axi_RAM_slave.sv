@@ -47,9 +47,12 @@ module axi_slave_memory #(
 	// --------------------------------------------------------------
     // Write FSM
     // --------------------------------------------------------------
-    localparam R_IDLE = 2'd0, R_SEND = 2'd1;
+	typedef enum logic [1:0] {
+        R_IDLE,
+		R_SEND
+    } state_t;
     
-    logic [1:0] r_state;
+    state_t r_state;
     logic [7:0] r_cnt;
     logic [ADDR_WIDTH-1:0] r_addr_base;
     
@@ -124,9 +127,13 @@ module axi_slave_memory #(
     // --------------------------------------------------------------
     // Write FSM
     // --------------------------------------------------------------
-    localparam W_IDLE = 2'd0, W_DATA = 2'd1, W_RESP = 2'd2;
+	typedef enum logic [1:0] {
+        W_IDLE,
+		W_DATA,
+		W_RESP
+    } STATE_T;
 
-    logic [1:0] w_state;
+    STATE_T w_state;
     logic [7:0] w_cnt;
     logic [ADDR_WIDTH-1:0] w_addr_base;
 
