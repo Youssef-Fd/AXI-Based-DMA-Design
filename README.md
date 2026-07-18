@@ -6,11 +6,11 @@ A high-performance, modular SystemVerilog implementation of an **AXI4-compliant 
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
-2. [System Architecture](#system-architecture)
-3. [Understanding AXI4 Protocol: A Quick Reference](#understanding-axi4-protocol-a-quick-reference)
-4. [Hardware Components](#hardware-components)
-5. [Simulation & Verification](#simulation--verification)
-6. [Repository Structure](#repository-structure)
+2. [What is Direct Memory Access (DMA)?](#what-is-direct-memory-access-dma)
+3. [System Architecture](#system-architecture)
+4. [Understanding AXI4 Protocol: A Quick Reference](#understanding-axi4-protocol-a-quick-reference)
+5. [Hardware Components](#hardware-components)
+6. [Simulation & Verification](#simulation--verification)
 7. [References](#references)
 
 ---
@@ -25,6 +25,36 @@ Direct Memory Access (DMA) is a critical component in modern SoC (System-on-Chip
 * **Internal FIFO Buffer**: A dedicated internal synchronous FIFO decouples the read and write clock domains/flows and buffers data during transmission.
 * **Automatic Address Incrementing**: The controller automatically computes and increments the source and destination addresses based on the data width and burst sizes.
 * **Error Propagation**: Detects memory-space or protocol errors (e.g., `SLVERR` response) and handles them via an error state machine, asserting a top-level error signal.
+
+---
+
+## What is Direct Memory Access (DMA)?
+
+Direct Memory Access (DMA) is a feature of computer systems that allows certain hardware subsystems to access main system memory (RAM) independently of the central processing unit (CPU).
+
+### Why is DMA Needed?
+In systems without DMA, whenever a peripheral device (like a network controller, storage interface, or high-speed sensor) needs to transfer data to or from memory, the CPU must actively supervise the entire copy operation. The CPU has to execute a loop reading data from the peripheral's register and writing it to a memory address, word by word (called Programmed Input/Output or PIO).
+
+This is highly inefficient because:
+* It consumes valuable CPU execution cycles on a simple, repetitive memory copy task.
+* The CPU is blocked from running other software threads or application code during the transfer.
+* The throughput is limited by the instruction execution speed of the CPU.
+
+### How Does DMA Solve This?
+A DMA controller (DMAC) acts as a specialized hardware unit dedicated solely to transferring data at hardware speed.
+1. **CPU Initialization**: The CPU configures the DMA controller with:
+   - **Source Address**: Where the data is read from.
+   - **Destination Address**: Where the data is written to.
+   - **Transfer Length**: The total number of words to copy.
+   - **Burst Size/Length**: The length of individual burst transactions on the bus.
+2. **Transfer Execution**: The CPU asserts the `start` signal. The DMA controller then takes command of the memory bus, reading from the source and writing to the destination.
+3. **CPU Notification**: Once the transfer is completed, the DMA controller asserts a `done` signal (or triggers an interrupt) to inform the CPU. The CPU can then process the moved data.
+
+### DMA Operation in this Project
+This project implements a **Memory-to-Memory AXI DMA**. It transfers blocks of data between a source memory space and a destination memory space using the standard AXI4 protocol.
+* To decouple the read and write paths and prevent bus stall conditions, it features an **Internal Synchronous FIFO**. 
+* The **AXI Read Master** reads data from the source address space and pushes it into the FIFO.
+* Simultaneously, the **AXI Write Master** pulls data from the FIFO and writes it to the destination address space.
 
 ---
 
