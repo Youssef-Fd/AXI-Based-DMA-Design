@@ -149,16 +149,9 @@ Manages the global state machine of the DMA transaction.
 Below is the simulation waveform demonstrating the transition of the controller states:
 ![DMA Controller Waveform](hdl/DMA_Controller/dma_controller_test.png)
 
-### 2. AXI Read Master ([`AXI_Read_MASTER.sv`](file:///c:/Users/Lenovo/Pictures/AXI%20Based%20DMA_project/hdl/AXI_Read_MASTER/AXI_Read_MASTER.sv))
-Initiates read requests on the AXI bus and pushes incoming data beats directly into the internal FIFO buffer.
-* Drives `ARADDR`, `ARLEN`, `ARSIZE`, `ARBURST`, and `ARVALID`.
-* Asserts `RREADY` as long as the FIFO is not full (`!FIFO_FULL`).
-* Detects transaction completion on `RLAST` and propagates error statuses via `RRESP`.
 
-Below is the simulation waveform demonstrating AXI Read Master transactions paired with FIFO status:
-![AXI Read Master with FIFO Waveform](hdl/AXI_Read_MASTER/AXI_Read_MASTER_test%20with%20FIFO.png)
 
-### 3. AXI Write Master ([`axi_write_master.sv`](file:///c:/Users/Lenovo/Pictures/AXI%20Based%20DMA_project/hdl/AXI_Write_MASTER/axi_write_master.sv))
+### 2. AXI Write Master ([`axi_write_master.sv`](file:///c:/Users/Lenovo/Pictures/AXI%20Based%20DMA_project/hdl/AXI_Write_MASTER/axi_write_master.sv))
 Pulls data from the internal FIFO and streams it onto the AXI Write channels.
 * Drives `AWADDR`, `AWLEN`, `AWSIZE`, `AWBURST`, and `AWVALID`.
 * Fetches data from the FIFO when `FIFO_EMPTY` is low and controls the read enable `FIFO_RD_EN`.
@@ -167,6 +160,15 @@ Pulls data from the internal FIFO and streams it onto the AXI Write channels.
 
 Below is the simulation waveform demonstrating AXI Write Master transactions paired with FIFO status:
 ![AXI Write Master with FIFO Waveform](hdl/AXI_Write_MASTER/AXI_Write_MASTER_test%20with%20FIFO.png)
+
+### 3. AXI Read Master ([`AXI_Read_MASTER.sv`](file:///c:/Users/Lenovo/Pictures/AXI%20Based%20DMA_project/hdl/AXI_Read_MASTER/AXI_Read_MASTER.sv))
+Initiates read requests on the AXI bus and pushes incoming data beats directly into the internal FIFO buffer.
+* Drives `ARADDR`, `ARLEN`, `ARSIZE`, `ARBURST`, and `ARVALID`.
+* Asserts `RREADY` as long as the FIFO is not full (`!FIFO_FULL`).
+* Detects transaction completion on `RLAST` and propagates error statuses via `RRESP`.
+
+Below is the simulation waveform demonstrating AXI Read Master transactions paired with FIFO status:
+![AXI Read Master with FIFO Waveform](hdl/AXI_Read_MASTER/AXI_Read_MASTER_test%20with%20FIFO.png)
 
 ### 4. Synchronous FIFO Buffer ([`FIFO.sv`](file:///c:/Users/Lenovo/Pictures/AXI%20Based%20DMA_project/hdl/AXI_Read_MASTER/FIFO.sv))
 A simple, robust circular buffer used to cross/buffer the data path.
@@ -202,41 +204,6 @@ Below is the complete top-level DMA simulation waveform verifying the operations
 * **Success Criteria**: The DMA Engine stops and asserts its top-level `error` output.
 
 ---
-
-## Repository Structure
-
-```
-├── Docs/
-│   ├── Amba_axi_protocol_spec.pdf           # ARM Official AXI4 Protocol Specification
-│   ├── microsemi_smartfusion2_...pdf        # Microsemi Application Note for AXI integration
-│   ├── AXI Read Flow.png                    # Flow chart of AXI Read operation
-│   ├── AXI Write Flow.png                   # Flow chart of AXI Write operation
-│   ├── Read Transaction Timing Diagram.png   # Standard timing chart for AXI Reads
-│   ├── Write Transaction Timing Diagram.png  # Standard timing chart for AXI Writes
-│   └── The Handshake Mechanism.png          # timing chart for VALID/READY handshake
-│
-├── hdl/
-│   ├── AXI_Read_MASTER/
-│   │   ├── AXI_Read_MASTER.sv               # AXI Read Master interface implementation
-│   │   ├── FIFO.sv                          # Synchronous FIFO memory model
-│   │   └── AXI_Read_MASTER_test with FIFO.png # Simulation waveform for Read Master
-│   │
-│   ├── AXI_Write_MASTER/
-│   │   ├── axi_write_master.sv              # AXI Write Master interface implementation
-│   │   ├── FIFO.sv                          # Synchronous FIFO memory model
-│   │   └── AXI_Write_MASTER_test with FIFO.png # Simulation waveform for Write Master
-│   │
-│   ├── DMA_Controller/
-│   │   ├── dma_controller.sv                # DMA Control State Machine
-│   │   └── dma_controller_test.png          # Simulation waveform for Controller
-│   │
-│   ├── dma_engine.sv                        # Top-level DMA Module (Wraps Controller, Masters, FIFO)
-│   ├── axi_RAM_slave.sv                     # Simulated AXI-RAM Slave Memory
-│   ├── dma_engine_with_AXI_ram_slave_test.sv # Comprehensive DMA System Testbench
-│   └── dma_engine_with_AXI_ram_slave.png    # Top-level DMA Simulation waveform
-│
-└── README.md                                # This documentation file
-```
 
 ---
 
