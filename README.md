@@ -146,7 +146,7 @@ Manages the global state machine of the DMA transaction.
   * `FINISHED`: Asserts `done` and returns to `IDLE`.
   * `ERROR_STATE`: Asserts `error` and returns to `IDLE`.
 
-Below is the simulation waveform demonstrating the transition of the controller states:
+The simulation waveform demonstrating the transition of the controller states:
 ![DMA Controller Waveform](hdl/DMA_Controller/dma_controller_test.png)
 
 
@@ -158,7 +158,7 @@ Pulls data from the internal FIFO and streams it onto the AXI Write channels.
 * Asserts `WLAST` on the final beat.
 * Waits for the write response handshake `BVALID` & `BREADY` to ensure data has been safely written before reporting `done`.
 
-Below is the simulation waveform demonstrating AXI Write Master transactions paired with FIFO status:
+The simulation waveform demonstrating AXI Write Master transactions paired with FIFO status:
 ![AXI Write Master with FIFO Waveform](hdl/AXI_Write_MASTER/AXI_Write_MASTER_test%20with%20FIFO.png)
 
 ### 3. AXI Read Master ([`AXI_Read_MASTER.sv`](file:///c:/Users/Lenovo/Pictures/AXI%20Based%20DMA_project/hdl/AXI_Read_MASTER/AXI_Read_MASTER.sv))
@@ -167,7 +167,7 @@ Initiates read requests on the AXI bus and pushes incoming data beats directly i
 * Asserts `RREADY` as long as the FIFO is not full (`!FIFO_FULL`).
 * Detects transaction completion on `RLAST` and propagates error statuses via `RRESP`.
 
-Below is the simulation waveform demonstrating AXI Read Master transactions paired with FIFO status:
+The simulation waveform demonstrating AXI Read Master transactions paired with FIFO status:
 ![AXI Read Master with FIFO Waveform](hdl/AXI_Read_MASTER/AXI_Read_MASTER_test%20with%20FIFO.png)
 
 ### 4. Synchronous FIFO Buffer ([`FIFO.sv`](file:///c:/Users/Lenovo/Pictures/AXI%20Based%20DMA_project/hdl/AXI_Read_MASTER/FIFO.sv))
@@ -181,7 +181,7 @@ A simple, robust circular buffer used to cross/buffer the data path.
 
 The design is verified using the testbench [`dma_engine_with_AXI_ram_slave_test.sv`](file:///c:/Users/Lenovo/Pictures/AXI%20Based%20DMA_project/hdl/dma_engine_with_AXI_ram_slave_test.sv). It connects the DMA engine to two simulated AXI block-RAM slaves ([`axi_RAM_slave.sv`](file:///c:/Users/Lenovo/Pictures/AXI%20Based%20DMA_project/hdl/axi_RAM_slave.sv)): one serving as the source memory and the other as the destination memory.
 
-Below is the complete top-level DMA simulation waveform verifying the operations:
+The complete top-level DMA simulation waveform verifying the operations:
 ![Top-level DMA Engine Waveform](hdl/dma_engine_with_AXI_ram_slave.png)
 
 ### Test Descriptions
