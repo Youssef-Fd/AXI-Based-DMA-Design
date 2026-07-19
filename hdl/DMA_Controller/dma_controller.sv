@@ -103,19 +103,19 @@ module dma_controller #(
 				
 				START_READ: begin 
 			        if(remaining_words <= {24'b0, burst_len}) begin
-                        burst_size <= remaining_words[7:0];
-                        last_burst <= 1'b1;
+                        burst_size      <= remaining_words[7:0];
+                        last_burst      <= 1'b1;
                         read_burst_len  <= remaining_words[7:0];
                         write_burst_len <= remaining_words[7:0];
                     end
                     else begin
-                        burst_size <= burst_len;
-                        last_burst <= 1'b0;
+                        burst_size      <= burst_len;
+                        last_burst      <= 1'b0;
                         read_burst_len  <= burst_len;
                         write_burst_len <= burst_len;
                     end
                     read_start <= 1'b1;
-                    STATE <= WAIT_READ;
+                    STATE      <= WAIT_READ;
 				end
 				
 				WAIT_READ: begin
@@ -129,12 +129,12 @@ module dma_controller #(
 				
 				START_WRITE_0: begin
 				    write_start <= 1'b1;
-					STATE <= START_WRITE_1;
+					STATE       <= START_WRITE_1;
 				end
 				
 				START_WRITE_1: begin
 				    write_start <= 1'b1;
-					STATE <= WAIT_WRITE;
+					STATE       <= WAIT_WRITE;
 				end 
 				
 				WAIT_WRITE: begin
@@ -146,7 +146,12 @@ module dma_controller #(
 						end
 						else begin 
 						    remaining_words <= remaining_words - burst_size;
-							read_addr       <= read_addr  + burst_size*(DATA_WIDTH/8);
+							/*
+							bumps read_addr/write_addr forward by burst_size*(DATA_WIDTH/8) bytes,
+							so the next burst continues from where the last one left off,
+							not from the start again. 
+							*/
+							read_addr       <= read_addr  + burst_size*(DATA_WIDTH/8); 
 							write_addr      <= write_addr + burst_size*(DATA_WIDTH/8);
 							STATE           <= START_READ;
 						end
