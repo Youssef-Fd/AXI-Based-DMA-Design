@@ -43,7 +43,7 @@ module tb_dma_top;
     //---------------------------------------------------------
     // Write bus: dma_engine -> destination memory
     //---------------------------------------------------------
-    logic [ADDR_WIDTH-1:0] AWADDR;
+    logic [ADDR_WIDTH-1:0]   AWADDR;
     logic [7:0]               AWLEN;
     logic [2:0]               AWSIZE;
     logic [1:0]               AWBURST;
@@ -100,10 +100,7 @@ module tb_dma_top;
         .ARADDR(ARADDR), .ARLEN(ARLEN), .ARSIZE(ARSIZE), .ARBURST(ARBURST),
         .ARVALID(ARVALID), .ARREADY(ARREADY),
         .RDATA(RDATA), .RRESP(RRESP), .RLAST(RLAST), .RVALID(RVALID), .RREADY(RREADY),
-
-        // This memory is never written by this testbench over AXI --
-        // it's preloaded directly (hierarchical access) below. Tie the
-        // unused write channel off so it can't interfere.
+        
         .AWADDR('0), .AWLEN('0), .AWSIZE('0), .AWBURST('0),
         .AWVALID(1'b0), .AWREADY(),
         .WDATA('0), .WSTRB('0), .WLAST(1'b0), .WVALID(1'b0), .WREADY(),
@@ -120,9 +117,6 @@ module tb_dma_top;
     ) u_dst_mem (
         .clk(clk), .rst(rst),
 
-        // This memory is never read by this testbench over AXI -- it's
-        // checked directly (hierarchical access) below. Tie the unused
-        // read channel off.
         .ARADDR('0), .ARLEN('0), .ARSIZE('0), .ARBURST('0),
         .ARVALID(1'b0), .ARREADY(),
         .RDATA(), .RRESP(), .RLAST(), .RVALID(), .RREADY(1'b0),
