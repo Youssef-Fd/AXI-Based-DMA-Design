@@ -1,0 +1,257 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Module Name: de1_dma_top
+//
+// Description: Top-level for the DE1 (Cyclone II) board. Demonstrates the
+//              DMA engine moving a fixed-size block of data between two
+//              on-chip RAM instances (axi_slave_memory), triggered by a
+//              pushbutton, with status shown on LEDs and the transferred
+//              data shown on the 7-segment displays.
+//
+//              Demo transfer, fixed for simplicity:
+//                SRC_ADDR = 0            (word 0 of the source memory)
+//                DST_ADDR = DEMO_LEN*4   (word DEMO_LEN of the dest. memory,
+//                                          just so source/dest don't visually
+//                                          overlap if you inspect both in
+//                                          SignalTap)
+//                LENGTH   = DEMO_LEN words
+//                BURST    = DEMO_LEN (single burst, fits the internal FIFO)
+//
+//              The source memory is preloaded at power-up (initial block,
+//              becomes part of the bitstream's RAM initialization) with a
+//              known incrementing pattern: word i = 8'hA0 + i. This makes
+//              the result on the HEX displays predictable and checkable
+//              by eye.
+//
+//              Controls:
+//                KEY[0] : reset (active-low on DE1, inverted below)
+//                KEY[1] : start transfer (debounced, single-pulse)
+//
+//              Status:
+//                LEDG[0] : busy
+//                LEDG[1] : done
+//                LEDG[2] : error
+//                HEX1:HEX0 : destination word 0, low byte, in hex
+//                            (blank until the first transfer completes)
+//////////////////////////////////////////////////////////////////////////////////
+
+module de1_dma_top #(
+    parameter ADDR_WIDTH = 32,
+    parameter DATA_WIDTH = 32,
+    parameter FIFO_DEPTH = 128,
+    parameter MEM_DEPTH  = 128,     // small on-chip RAM, plenty for the demo
+    parameter DEMO_LEN   = 128      // words moved per button press
+)(
+    input  logic        CLOCK_50,
+    input  logic [3:0]  KEY,       // KEY[3:0], active-low
+    input  logic [9:0]  SW,
+    output logic [7:0]  LEDG,
+    output logic [9:0]  LEDR,
+    output logic [6:0]  HEX0,
+    output logic [6:0]  HEX1,
+    output logic [6:0]  HEX2,
+    output logic [6:0]  HEX3
+);
+
+    logic clk;
+    logic rst;
+
+    assign clk = CLOCK_50;
+    assign rst = ~KEY[1];
+
+    //-------------------------------------------------------------
+    // DMA control/status
+    //-------------------------------------------------------------
+    logic                   dma_start;
+    logic [ADDR_WIDTH-1:0]  src_addr;
+    logic [ADDR_WIDTH-1:0]  dst_addr;
+    logic [31:0]            transfer_length;
+    logic [7:0]             burst_len;
+    logic                   busy, done, error;
+
+    assign dma_start       = ~KEY[2]; //start_pulse;
+    assign src_addr        = '0;
+    assign dst_addr        = SW;      // byte address, so it lands at word DEMO_LEN
+    assign transfer_length = DEMO_LEN;
+    assign burst_len       = DEMO_LEN[7:0];
+
+    
+    assign LEDG[6] = ~KEY[2]; //START
+    assign LEDG[5] = ~KEY[1]; //RESET
+    assign LEDG[4] = 1'b1;
+    assign LEDG[3] = 1'b1;
+    assign LEDG[0] = busy;
+    assign LEDR    = dbg_addr[9:0];
+
+    // `done`/`error` from dma_controller are single-cycle pulses --
+    // at 50MHz that's 20ns, far too fast for a human eye to ever
+    // perceive directly. Latch them into sticky indicators that
+    // stay lit until the NEXT transfer starts, so the LEDs actually
+    // show something meaningful after a press.
+    logic done_sticky, error_sticky;
+
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst) begin
+            done_sticky  <= 1'b0;
+            error_sticky <= 1'b0;
+        end else begin
+            if (dma_start) begin           // clear on the next press, before the new transfer starts
+                done_sticky  <= 1'b0;
+                error_sticky <= 1'b0;
+            end
+            if (done)  done_sticky  <= 1'b1;
+            if (error) error_sticky <= 1'b1;
+        end
+    end
+
+    assign LEDG[1] = done_sticky;
+    assign LEDG[2] = error_sticky;
+
+    //-------------------------------------------------------------
+    // AXI read bus: dma_engine <-> source RAM
+    //-------------------------------------------------------------
+    logic [ADDR_WIDTH-1:0] ARADDR;
+    logic [7:0]              ARLEN;
+    logic [2:0]               ARSIZE;
+    logic [1:0]               ARBURST;
+    logic                     ARVALID;
+    logic                     ARREADY;
+    logic [DATA_WIDTH-1:0]   RDATA;
+    logic [1:0]               RRESP;
+    logic                     RLAST;
+    logic                     RVALID;
+    logic                     RREADY;
+
+    //-------------------------------------------------------------
+    // AXI write bus: dma_engine <-> destination RAM
+    //-------------------------------------------------------------
+    logic [ADDR_WIDTH-1:0] AWADDR;
+    logic [7:0]               AWLEN;
+    logic [2:0]               AWSIZE;
+    logic [1:0]               AWBURST;
+    logic                     AWVALID;
+    logic                     AWREADY;
+    logic [DATA_WIDTH-1:0]   WDATA;
+    logic [DATA_WIDTH/8-1:0] WSTRB;
+    logic                     WLAST;
+    logic                     WVALID;
+    logic                     WREADY;
+    logic [1:0]               BRESP;
+    logic                     BVALID;
+    logic                     BREADY;
+
+    //-------------------------------------------------------------
+    // The DMA engine itself (unchanged from simulation)
+    //-------------------------------------------------------------
+    dma_engine #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .FIFO_DEPTH(FIFO_DEPTH)
+    ) u_dma (
+        .clk(clk), .rst(rst),
+
+        .start(dma_start),
+        .src_addr(src_addr),
+        .dst_addr(dst_addr),
+        .transfer_length(transfer_length),
+        .burst_len(burst_len),
+        .busy(busy), .done(done), .error(error),
+
+        .ARADDR(ARADDR), .ARLEN(ARLEN), .ARSIZE(ARSIZE), .ARBURST(ARBURST),
+        .ARVALID(ARVALID), .ARREADY(ARREADY),
+        .RDATA(RDATA), .RRESP(RRESP), .RLAST(RLAST), .RVALID(RVALID), .RREADY(RREADY),
+
+        .AWADDR(AWADDR), .AWLEN(AWLEN), .AWSIZE(AWSIZE), .AWBURST(AWBURST),
+        .AWVALID(AWVALID), .AWREADY(AWREADY),
+        .WDATA(WDATA), .WSTRB(WSTRB), .WLAST(WLAST), .WVALID(WVALID), .WREADY(WREADY),
+        .BRESP(BRESP), .BVALID(BVALID), .BREADY(BREADY)
+    );
+
+    //-------------------------------------------------------------
+    // Source on-chip RAM, preloaded at power-up with a known
+    // pattern: word i = 0xA0 + i.
+    //-------------------------------------------------------------
+    axi_slave_memory #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .MEM_DEPTH(MEM_DEPTH),
+        .INIT_ENABLE(1),          // preload at power-up, no external init block needed
+        .INIT_BASE(32'h0000_00A0) // word i = 0xA0 + i
+    ) u_src_mem (
+        .clk(clk), .rst(rst),
+
+        .ARADDR(ARADDR), .ARLEN(ARLEN), .ARSIZE(ARSIZE), .ARBURST(ARBURST),
+        .ARVALID(ARVALID), .ARREADY(ARREADY),
+        .RDATA(RDATA), .RRESP(RRESP), .RLAST(RLAST), .RVALID(RVALID), .RREADY(RREADY),
+
+        .AWADDR('0), .AWLEN('0), .AWSIZE('0), .AWBURST('0),
+        .AWVALID(1'b0), .AWREADY(),
+        .WDATA('0), .WSTRB('0), .WLAST(1'b0), .WVALID(1'b0), .WREADY(),
+        .BRESP(), .BVALID(), .BREADY(1'b0),
+
+        .DBG_ADDR('0), .DBG_DATA()   // not used for the source memory
+    );
+
+    //-------------------------------------------------------------
+    // Destination on-chip RAM -- the DMA writes here
+    //-------------------------------------------------------------
+    logic [DATA_WIDTH-1:0] dst_dbg_data;
+    
+    logic [31:0] dbg_addr;
+
+    // Select memory word using switches
+    assign dbg_addr = SW << 2;
+
+    axi_slave_memory #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
+        .MEM_DEPTH(MEM_DEPTH)
+    ) u_dst_mem (
+        .clk(clk), .rst(rst),
+
+        .ARADDR('0), .ARLEN('0), .ARSIZE('0), .ARBURST('0),
+        .ARVALID(1'b0), .ARREADY(),
+        .RDATA(), .RRESP(), .RLAST(), .RVALID(), .RREADY(1'b0),
+
+        .AWADDR(AWADDR), .AWLEN(AWLEN), .AWSIZE(AWSIZE), .AWBURST(AWBURST),
+        .AWVALID(AWVALID), .AWREADY(AWREADY),
+        .WDATA(WDATA), .WSTRB(WSTRB), .WLAST(WLAST), .WVALID(WVALID), .WREADY(WREADY),
+        .BRESP(BRESP), .BVALID(BVALID), .BREADY(BREADY),
+
+        .DBG_ADDR(dbg_addr),   // word DEMO_LEN, i.e. dst_addr -- word 0 of the transfer
+        .DBG_DATA(dst_dbg_data)
+    );
+
+    logic [15:0] dst_word_half;
+    assign dst_word_half = dst_dbg_data[15:0];
+    
+    logic seen_done;
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst)
+            seen_done <= 1'b0;
+        else if (done)
+            seen_done <= 1'b1;
+    end
+
+
+    seg7_decoder u_hex0 (
+        .hex_in (dst_word_half[3:0]),
+        .blank  (!seen_done),
+        .seg_out(HEX1)
+    );
+
+    seg7_decoder u_hex1 (
+        .hex_in (dst_word_half[7:4]),
+        .blank  (!seen_done),
+        .seg_out(HEX2)
+    );
+
+     seg7_decoder u_hex2 (
+        .hex_in (dst_word_half[11:8]),
+        .blank  (!seen_done),
+        .seg_out(HEX3)
+    );
+    
+    assign HEX0 = 7'b1111111;
+
+endmodule
